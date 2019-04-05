@@ -9,19 +9,25 @@ import heartbeat_pb2
 import heartbeat_pb2_grpc
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
-counter = 0
+
+counter_map = dict()
+
 
 class Heartbeat(heartbeat_pb2_grpc.HearBeatServicer):
     def _init_(self):
         self.status=200
 
     def isAlive(self, request, context):
-         global counter
+         global counter_map
+         if self in counter_map:
+             counter_map[self] += 1
+         else:
+             counter_map[self] = 0
          cpu_usage = str(psutil.cpu_percent())
          disk_space = str(psutil.virtual_memory()[2])
          used_mem = str(psutil.disk_usage('/')[3])
-         info = heartbeat_pb2.Stats(cpu_usage = cpu_usage, disk_space = disk_space, used_mem = used_mem)
-         counter += 1
+         info = heartbeat_pb2.Stats(cpu_usage = cpu_usage, disk_space = str(counter_map[self]), used_mem = used_mem)
+         
          return info
 
 # def serve():
